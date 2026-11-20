@@ -291,13 +291,12 @@ public final class MainActivity extends Activity {
         LocalDate date = LocalDate.now(VisitLogic.SWEDEN).plusDays(dayOffset);
         VisitLogic.Period day = new VisitLogic.Period(date, date.plusDays(1));
         List<VisitStore.Visit> visits = store.visits(day);
-        long total = 0;
         Map<String, Long> categories = new LinkedHashMap<>();
         for (VisitStore.Visit visit : visits) {
             long included = day.overlap(visit.start(), visit.end());
-            total += included;
             categories.merge(visit.category(), included, Long::sum);
         }
+        long total = categories.values().stream().mapToLong(Long::longValue).sum();
 
         LinearLayout selector = horizontal();
         selector.setGravity(Gravity.CENTER_VERTICAL);
