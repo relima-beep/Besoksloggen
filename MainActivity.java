@@ -64,7 +64,7 @@ public final class MainActivity extends Activity {
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService geocoding = Executors.newSingleThreadExecutor();
-    private enum Tab { OVERVIEW, DAY, PLACES, SETTINGS }
+    private enum Tab { OVERVIEW, DAY, JOB, PLACES, SETTINGS }
     private VisitStore store;
     private AddressNotifications addressNotifications;
     private LinearLayout root, body;
@@ -132,7 +132,7 @@ public final class MainActivity extends Activity {
 
     private final Runnable refresh = new Runnable() {
         @Override public void run() {
-            if (tab == Tab.OVERVIEW || tab == Tab.DAY) render();
+            if (tab == Tab.OVERVIEW || tab == Tab.DAY || tab == Tab.JOB) render();
             handler.postDelayed(this, 12_000);
         }
     };
@@ -149,6 +149,7 @@ public final class MainActivity extends Activity {
         String heading = switch (tab) {
             case OVERVIEW -> "Period 20:e–20:e";
             case DAY -> "Dagslogg";
+            case JOB -> "Jobbstatistik";
             case PLACES -> "Sparade platser";
             case SETTINGS -> "Inställningar";
         };
@@ -157,6 +158,7 @@ public final class MainActivity extends Activity {
         switch (tab) {
             case OVERVIEW -> renderOverview();
             case DAY -> renderDay();
+            case JOB -> renderJob();
             case PLACES -> renderPlaces();
             case SETTINGS -> renderSettings();
         }
@@ -167,7 +169,9 @@ public final class MainActivity extends Activity {
         weight(nav, tabButton("20:e–20:e", Tab.OVERVIEW));
         space(nav, 5);
         weight(nav, tabButton("Dag", Tab.DAY));
-        space(nav, 5);
+        space(nav, 3);
+        weight(nav, tabButton("Jobb", Tab.JOB));
+        space(nav, 3);
         weight(nav, tabButton("Platser", Tab.PLACES));
         space(nav, 5);
         weight(nav, tabButton("Inställningar", Tab.SETTINGS));
@@ -178,8 +182,8 @@ public final class MainActivity extends Activity {
 
     private TextView tabButton(String name, Tab destination) {
         TextView item = button(name, tab == destination, () -> switchTab(destination));
-        item.setTextSize(13);
-        item.setPadding(dp(3), dp(4), dp(3), dp(4));
+        item.setTextSize(12);
+        item.setPadding(dp(2), dp(4), dp(2), dp(4));
         return item;
     }
 
@@ -188,6 +192,53 @@ public final class MainActivity extends Activity {
         tab = destination;
         scroll.scrollTo(0, 0);
         render();
+    }
+
+    private void renderJob() {
+        long now = System.currentTimeMillis();
+        VisitLogic.Period period = VisitLogic.period(now, offset);
+        List<VisitStore.WorkDay> days = store.workDays(period.from().toString(), period.until().toString());
+        long officeTotal = 0;
+        for (VisitStore.WorkDay day : days) officeTotal += roundedShift(day.arrival(), day.departure());
+        long homeTotal = 0;
+        for (VisitStore.HomeWork session : store.homeWork(period.start(), period.end()))
+            homeTotal += Math.max(0, Math.min(session.end(), period.end()) - Math.max(session.start(), period.start()));
+        long total = officeTotal + homeTotal;
+
+        LinearLayout selector = horizontal();
+        selector.setGravity(Gravity.CENTER_VERTICAL);
+        TextView prev = button("‹", false, () -> shift(-1));
+        prev.setContentDescription("Föregående period");
+        selector.addView(prev, new LinearLayout.LayoutParams(dp(45), dp(46)));
+        TextView range = label(periodLabel(period), 15, FG, true);
+        range.setGravity(Gravity.CENTER);
+        weight(selector, range);
+        TextView next = button("›", false, () -> shift(1));
+        next.setContentDescription("Nästa period");
+        next.setEnabled(offset < 0);
+        if (offset == 0) next.setAlpha(0.38f);
+        selector.addView(next, new LinearLayout.LayoutParams(dp(45), dp(46)));
+        body.addView(selector);
+        gap(body, 12);
+
+        body.addView(label("Sammanställning för perioden", 16, MUTED, true));
+        gap(body, 8);
+        LinearLayout totals = horizontal();
+        weight(totals, stat("Totalt jobb", total, MINT));
+        space(totals, 8);
+        weight(totals, stat("På arbetsplats", officeTotal, BLUE));
+        body.addView(totals);
+        gap(body, 8);
+        LinearLayout details = card();
+        long average = days.isEmpty() ? 0 : officeTotal / days.size();
+        details.addView(label("Arbetsdagar registrerade: " + days.size(), 15, FG, true));
+        gap(details, 6);
+        details.addView(label("Jobba hemifrån: " + duration(homeTotal), 14, BLUE, false));
+        gap(details, 4);
+        details.addView(label("Snitt per registrerad arbetsdag: " + duration(average), 14, MUTED, false));
+        body.addView(details);
+        gap(body, 14);
+        renderWorkTime(period, now);
     }
 
     private void renderOverview() {
@@ -233,7 +284,6 @@ public final class MainActivity extends Activity {
         weight(first, stat("Hemma", totals.getOrDefault(VisitLogic.HOME, 0L), BLUE));
         body.addView(first);
         gap(body, 18);
-        renderWorkTime(period, now);
         gap(body, 9);
         LinearLayout second = horizontal();
         weight(second, stat("Krogar", totals.getOrDefault(VisitLogic.BAR, 0L), WARM));

@@ -1,6 +1,6 @@
 # Besöksloggen för Android
 
-Besöksloggen sparar besök som varar längre än den minimitid du väljer. Standard är 20 minuter. Fliken **20:e–20:e** visar besök, ankomst, sluttid och summerad tid för jobb, hemma, krogar och restauranger. Perioden går i svensk tid från klockan 00.00 den 20:e till samma tid nästa 20:e. Fliken **Dag** visar dagens datum, besök, sammanlagd registrerad tid och tid per kategori. Bläddra mellan dagar med pilarna. Välj **Dela dagsrapport** för att skicka eller spara dagens sammanställning via telefonens delningsmeny. Besök som korsar periodgränsen delas när totalsummorna beräknas.
+Besöksloggen sparar besök som varar längre än den minimitid du väljer. Standard är 20 minuter. Fliken **20:e–20:e** visar besök, ankomst, sluttid och summerad tid för jobb, hemma, krogar och restauranger. Perioden går i svensk tid från klockan 00.00 den 20:e till samma tid nästa 20:e. Fliken **Dag** visar dagens datum, besök, sammanlagd registrerad tid och tid per kategori. Fliken **Jobb** visar statistik för vald 20:e–20:e-period: total arbetstid, arbetstid på arbetsplatsen, hemarbete, antal registrerade arbetsdagar och snitt per arbetsdag. Bläddra mellan dagar med pilarna. Välj **Dela dagsrapport** för att skicka eller spara dagens sammanställning via telefonens delningsmeny. Besök som korsar periodgränsen delas när totalsummorna beräknas.
 
 ## Arbetstid
 
